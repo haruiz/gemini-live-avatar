@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Gemini Live Chat UI</title>
+
+    <!-- TailwindCSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+   <style>
+  @keyframes pulse-ring {
+    0% {
+      transform: scale(1);
+      opacity: 0.6;
+    }
+    50% {
+      transform: scale(1.75);
+      opacity: 0.25;
+    }
+    100% {
+      transform: scale(2.5);
+      opacity: 0;
+    }
+  }
+
+  .pulse-effect {
+    position: relative;
+    background-color: #dc2626 !important; /* Tailwind red-600 */
+    transition: background-color 0.3s ease-in-out;
+  }
+
+  .pulse-effect::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: 0.375rem;
+    background-color: rgba(220, 38, 38, 0.3); /* red-600/30 */
+    animation: pulse-ring 1.5s ease-out infinite;
+    z-index: 0;
+    filter: blur(4px);
+  }
+
+  button svg {
+    position: relative;
+    z-index: 10;
+  }
+
+  button:hover svg {
+    filter: drop-shadow(0 0 8px rgba(255, 0, 0, 0.6));
+  }
+</style>
+    <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js/+esm","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/","talkinghead":"https://cdn.jsdelivr.net/gh/met4citizen/TalkingHead@1.4/modules/talkinghead.mjs"}}</script>
+  <script type="module" crossorigin src="/assets/index-CQNC87ZP.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/index-BqCovb2I.css">
+</head>
+
+<body class="h-screen w-screen bg-[url('/background.png')] bg-cover bg-center bg-no-repeat font-sans text-white overflow-hidden relative">
+<!-- Avatar Background -->
+<div id="avatar" class="absolute inset-0 z-0 w-full h-full pointer-events-none overflow-hidden"></div>
+
+<!-- Output Text Box -->
+<div id="outputBox"
+     class="absolute top-24 right-10 w-[32rem] max-h-[60vh] overflow-y-auto z-40
+            bg-gradient-to-b from-black/70 via-gray-900/70 to-black/70 text-green-400 text-sm font-mono
+            border border-green-500/40 rounded-md p-4 shadow-[0_0_10px_rgba(0,255,0,0.3),0_0_20px_rgba(0,128,0,0.2)]">
+</div>
+
+<!-- Controls -->
+<div id="controls" class="fixed bottom-0 inset-x-0 z-50 px-4 pb-6">
+    <div class="flex items-center gap-4 w-full max-w-7xl mx-auto px-6 py-5 rounded-2xl bg-black/60 backdrop-blur-xl shadow-[0_0_10px_rgba(0,255,255,0.4),0_0_30px_rgba(0,128,255,0.4),0_0_60px_rgba(128,0,255,0.3)]">
+
+        <!-- Text Input -->
+        <input
+                id="text"
+                type="text"
+                placeholder="Say something..."
+                value="Hi there. How are you?"
+                class="flex-grow px-4 py-2 rounded-md bg-gray-800 text-white text-base placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-cyan-500"
+        />
+
+        <!-- Mic Button -->
+        <button id="mic" title="Voice Input"
+                class="relative p-3 rounded-md bg-gray-800 hover:bg-gray-700 hover:scale-110 transition">
+            <svg class="w-5 h-5 relative z-10" xmlns="http://www.w3.org/2000/svg" fill="none"
+                 viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                      d="M12 18.75v1.5m0-1.5a6.75 6.75 0 01-6.75-6.75M12 18.75a6.75 6.75 0 006.75-6.75M12 15a3.75 3.75 0 003.75-3.75V6.75a3.75 3.75 0 10-7.5 0v4.5A3.75 3.75 0 0012 15z"/>
+            </svg>
+            <span class="pulse-ring absolute inset-0 rounded-md bg-cyan-500 opacity-30 blur-md hidden"></span>
+        </button>
+
+        <!-- Camera Button -->
+        <button id="camera" title="Camera Input"
+                class="relative p-3 rounded-md bg-gray-800 text-white hover:bg-gray-700 hover:scale-110 transition">
+            <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none"
+                 viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                      d="M15 10.5V6.75A2.25 2.25 0 0012.75 4.5h-9A2.25 2.25 0 001.5 6.75v10.5A2.25 2.25 0 003.75 19.5h9A2.25 2.25 0 0015 17.25V13.5l6 4.5v-12l-6 4.5z"/>
+            </svg>
+            <span class="pulse-ring absolute inset-0 rounded-md bg-cyan-500 opacity-30 blur-md hidden"></span>
+        </button>
+
+        <!-- Screen Share Button -->
+        <button id="screenShare" title="Share Screen"
+                class="relative p-3 rounded-md bg-gray-800 text-white hover:bg-gray-700 hover:scale-110 transition">
+            <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none"
+                 viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                      d="M3.75 4.5h16.5A1.5 1.5 0 0121.75 6v9a1.5 1.5 0 01-1.5 1.5H3.75A1.5 1.5 0 012.25 15V6a1.5 1.5 0 011.5-1.5z"/>
+                <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 20.25h7.5"/>
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 16.5v3.75"/>
+            </svg>
+            <span class="pulse-ring absolute inset-0 rounded-md bg-cyan-500 opacity-30 blur-md hidden"></span>
+        </button>
+
+        <!-- Send Button -->
+        <button id="btnSend" title="Send Text"
+                class="p-3 rounded-md bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-600 hover:brightness-110 hover:scale-110 text-white transition">
+            <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none"
+                 viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                      d="M4.5 19.5l15-7.5-15-7.5v5.25L14.25 12 4.5 14.25v5.25z"/>
+            </svg>
+        </button>
+    </div>
+</div>
+
+<!-- Loading Model -->
+<div id="loading"
+     class="absolute top-8 left-1/2 transform -translate-x-1/2 px-4 py-2 rounded-md text-white text-sm z-50
+              bg-gradient-to-r from-cyan-500/60 via-blue-500/60 to-purple-600/60
+              backdrop-blur-md shadow-lg animate-pulse">
+    Loading model...
+</div>
+
+<!-- Video Preview -->
+<video id="videoPreview"
+       autoplay
+       playsinline
+       class="hidden fixed z-[60] w-64 h-64 rounded-md border-2 border-cyan-400 shadow-lg bg-black/50 object-cover">
+</video>
+
+</body>
+</html>

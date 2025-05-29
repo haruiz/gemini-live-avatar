@@ -1,0 +1,28 @@
+[project]
+name = "gemini-live-avatar"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "haruiz", email = "henryruiz22@gmail.com" }
+]
+requires-python = ">=3.10"
+dependencies = [
+    "fastapi[standard]>=0.115.12",
+    "google-genai>=1.16.1",
+    "pillow>=11.2.1",
+    "python-dotenv>=1.1.0",
+    "rich>=14.0.0",
+    "typer>=0.16.0",
+    "uvicorn>=0.34.2",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.pdm.scripts]
+gemini-live-avatar = "gemini_live_avatar.cli:app"
+
+[project.scripts]
+gemini-live-avatar = "gemini_live_avatar.cli:app"
