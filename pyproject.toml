@@ -1,12 +1,12 @@
 [project]
 name = "gemini-live-avatar"
-version = "0.1.0"
-description = "Add your description here"
+version = "0.1.3"
+description = "Create a live avatar using Gemini and FastAPI"
 readme = "README.md"
 authors = [
     { name = "haruiz", email = "henryruiz22@gmail.com" }
 ]
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 dependencies = [
     "fastapi[standard]>=0.115.12",
     "google-genai>=1.16.1",
@@ -26,3 +26,47 @@ gemini-live-avatar = "gemini_live_avatar.cli:app"
 
 [project.scripts]
 gemini-live-avatar = "gemini_live_avatar.cli:app"
+
+
+[tool.hatch.build]
+exclude = [
+    "tests/",
+    "docs/",
+    "examples/",
+    "assets/",
+    "keys/",
+    ".git/",
+    ".github/",
+    "scripts/",
+    "configs/",
+    "README.md",
+    ".env",
+    "config.json",
+    "*/**/.sh",
+    "Makefile",
+    "cloudbuild.yaml",
+    "*/**/Dockerfile",
+    "Dockerfile",
+    "requirements.txt",
+    "docker/",
+    "*.sh",
+    "*.yml",
+    "analysis/",
+    "data/",
+    "images/",
+    "ui/",
+    "web.ps1",
+    ".vscode/",
+    ".idea/",
+    ".gitignore",
+    ".gitattributes",
+    ".gitmodules",
+    ".gitkeep",
+    ".gitlab-ci.yml",
+    ".gitlab/",
+    ".gitlab-ci/",
+    ".gitlab-ci.yml",
+    ".python-version",
+    "uv.lock"
+
+]
