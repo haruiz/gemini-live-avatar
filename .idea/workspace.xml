@@ -12,16 +12,15 @@
       <change afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
       <change afterPath="$PROJECT_DIR$/Makefile" afterDir="false" />
       <change afterPath="$PROJECT_DIR$/src/gemini_live_avatar/session.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/gemini_live_avatar/site/assets/index-BqCovb2I.css" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/gemini_live_avatar/site/assets/index-CQNC87ZP.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/gemini_live_avatar/site/background.png" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.python-version" beforeDir="false" afterPath="$PROJECT_DIR$/.python-version" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/pyproject.toml" beforeDir="false" afterPath="$PROJECT_DIR$/pyproject.toml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/gemini_live_avatar/api.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/gemini_live_avatar/api.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/gemini_live_avatar/site/assets/index-BDkUsl3e.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/gemini_live_avatar/site/assets/index-CQNC87ZP.js" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/src/gemini_live_avatar/site/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/src/gemini_live_avatar/site/index.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ui/src/avatar/index.js" beforeDir="false" afterPath="$PROJECT_DIR$/ui/src/avatar/index.js" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/uv.lock" beforeDir="false" afterPath="$PROJECT_DIR$/uv.lock" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/yarn.lock" beforeDir="false" />
     </list>
@@ -105,7 +104,7 @@
       <workItem from="1748284179756" duration="27644000" />
       <workItem from="1748451477961" duration="12002000" />
       <workItem from="1748464745707" duration="9000" />
-      <workItem from="1748464788093" duration="30650000" />
+      <workItem from="1748464788093" duration="31355000" />
     </task>
     <servers />
   </component>

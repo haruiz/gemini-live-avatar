@@ -1,6 +1,6 @@
 [project]
 name = "gemini-live-avatar"
-version = "0.1.3"
+version = "0.1.4"
 description = "Create a live avatar using Gemini and FastAPI"
 readme = "README.md"
 authors = [
