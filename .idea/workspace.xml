@@ -8,6 +8,7 @@
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/pyproject.toml" beforeDir="false" afterPath="$PROJECT_DIR$/pyproject.toml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/run.sh" beforeDir="false" afterPath="$PROJECT_DIR$/run.sh" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/gemini_live_avatar/api.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/gemini_live_avatar/api.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/gemini_live_avatar/cli.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/gemini_live_avatar/cli.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/gemini_live_avatar/session.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/gemini_live_avatar/session.py" afterDir="false" />
@@ -61,6 +62,7 @@
     "Python.my_mcp_server.executor": "Run",
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "RunOnceActivity.git.unshallow": "true",
+    "SHELLCHECK.PATH": "/Users/haruiz/Library/Application Support/JetBrains/PyCharm2025.1/plugins/Shell Script/shellcheck",
     "git-widget-placeholder": "main",
     "last_opened_file_path": "/Users/haruiz/open-source/gemini-live-avatar",
     "node.js.detected.package.eslint": "true",
@@ -68,7 +70,7 @@
     "node.js.selected.package.eslint": "(autodetect)",
     "node.js.selected.package.tslint": "(autodetect)",
     "nodejs_package_manager_path": "npm",
-    "settings.editor.selected.configurable": "preferences.lookFeel",
+    "settings.editor.selected.configurable": "editor.preferences.fonts.default",
     "vue.rearranger.settings.migration": "true"
   }
 }]]></component>
@@ -151,7 +153,7 @@
       <workItem from="1748284179756" duration="27644000" />
       <workItem from="1748451477961" duration="12002000" />
       <workItem from="1748464745707" duration="9000" />
-      <workItem from="1748464788093" duration="62180000" />
+      <workItem from="1748464788093" duration="66139000" />
     </task>
     <servers />
   </component>

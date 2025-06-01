@@ -12,6 +12,9 @@
 - 🎥 **Webcam and screen sharing** capabilities for real-time context
 - 📄 **Multimodal chat log** displaying user prompts and Gemini responses
 
+
+[![Watch the video](https://img.youtube.com/vi/tQq_UM15wog/maxresdefault.jpg)](https://youtu.be/aguEcJN-FNM)
+
 ### 🧠 How It Works
 
 Gemini Live Avatar provides an interactive loop where the avatar listens, sees, responds, and reasons in real time:
