@@ -23,7 +23,7 @@ Gemini Live Avatar provides an interactive loop where the avatar listens, sees, 
    * **Speech responses** are synthesized and played back, with the avatar lip-syncing and animating to match the spoken content.
 4. **Function calling** is triggered dynamically when needed:
    * 🔍 **Google Search grounding** enhances answers with fresh external information.
-   * ⚙️ Some **Custom tools** has been implemented, such as `turn on the red(any color) light`, `turn off light`, to demonstrate how function calling can be integrated into the system.
+   * ⚙️ Some **Custom tools** has been implemented, such as ` Turn the green(any color) lights on`, `turn off light`, to demonstrate how function calling can be integrated into the system.
 5. **Screen and camera content** can be referenced directly in user queries like:
 
    * *"What’s in this slide?"*
@@ -40,8 +40,10 @@ This real-time loop enables expressive, grounded, and multimodal conversations w
 - [x] Webcam and screen sharing for real-time context
 - [x] Avatar animation with Ready Player Me
 - [ ] Avatar animation with Mixamo
-- [ ] Function calling by providing the MCP server URL
+- [x] Function calling by providing the MCP server URL
 - [ ] Integrate Gemini native audio output support
+- [ ] Integrate with ADK
+- [ ] Add interruption support for real-time responses
 
 ### Prerequisites
 
@@ -60,7 +62,7 @@ cd gemini-live-avatar
 uv sync
 ````
 
-# PIP Setup
+# PIP installation
 
 ```bash
 pip install gemini-live-avatar
@@ -69,7 +71,7 @@ pip install gemini-live-avatar
 ### Run the App
 
 ```bash
-gemini-live-avatar --avatar-path <path_to_your_avatar>
+gemini-live-avatar --google-search-grounding --workers 1 --avatar-path https://models.readyplayer.me/<AvatarID>.glb
 ```
 Then open your browser at: [http://localhost:8080](http://localhost:8080)
 

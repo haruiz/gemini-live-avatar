@@ -1,0 +1,7 @@
+{
+  "command": "mcp-proxy",
+  "args": ["http://0.0.0.0:8000/mcp"],
+  "env": {
+    "EXAMPLE_ENV_VAR": "some_value"
+  }
+}

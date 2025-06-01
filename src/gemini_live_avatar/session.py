@@ -22,6 +22,8 @@ import asyncio
 
 from google.genai.live import AsyncSession
 
+from gemini_live_avatar.mcp_server import MCPClient
+
 
 @dataclass
 class SessionState:
@@ -31,6 +33,7 @@ class SessionState:
     current_tool_execution: Optional[asyncio.Task] = None
     current_audio_stream: Optional[Any] = None
     live_session: Optional[AsyncSession] = None
+    mcp_server_client: Optional[MCPClient] = None
     received_model_response: bool = False  # Track if we've received a model response in current turn
 
 # Global session storage

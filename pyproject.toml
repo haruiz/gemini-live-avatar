@@ -1,6 +1,6 @@
 [project]
 name = "gemini-live-avatar"
-version = "0.1.4"
+version = "0.1.6"
 description = "Create a live avatar using Gemini and FastAPI"
 readme = "README.md"
 authors = [
@@ -27,6 +27,11 @@ gemini-live-avatar = "gemini_live_avatar.cli:app"
 [project.scripts]
 gemini-live-avatar = "gemini_live_avatar.cli:app"
 
+[project.optional-dependencies]
+mcp-demo = [
+    "fastapi-mcp>=0.3.4",
+    "mcp[cli]>=1.9.2",
+]
 
 [tool.hatch.build]
 exclude = [

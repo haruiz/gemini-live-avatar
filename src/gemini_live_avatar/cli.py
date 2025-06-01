@@ -6,6 +6,8 @@ import typer
 from typing_extensions import Annotated
 from dotenv import load_dotenv, find_dotenv
 
+from .config import runtime_config  # <-- import the global config instance
+
 # Load environment variables from a .env file
 load_dotenv(find_dotenv())
 
@@ -25,13 +27,6 @@ def dispatch_fastapi_app(
 ) -> None:
     """
     Launch a FastAPI application using Uvicorn.
-
-    Args:
-        app: Application import path (e.g., "myapp.main:app").
-        host: Host address to bind.
-        port: Port number.
-        workers: Number of worker processes (default: calculated based on CPU count).
-        reload: Enable hot-reload (useful for development).
     """
     if workers is None:
         workers = (os.cpu_count() or 1) * 2 + 1
@@ -43,33 +38,42 @@ def dispatch_fastapi_app(
 
 @app.command(name="start")
 def start(
-        host: Annotated[str, typer.Option("--host", help="Host address")] = "127.0.0.1",
-        port: Annotated[int, typer.Option("--port", help="Port number")] = 8080,
-        workers: Annotated[Optional[int], typer.Option("--workers", help="Number of workers")] = None,
-        reload: Annotated[bool, typer.Option("--reload", help="Enable auto-reload")] = False,
-        gemini_api_key: Annotated[
-            Optional[str], typer.Option(envvar="GEMINI_API_KEY", help="Google Gemini API key")] = None,
-        tts_api_key: Annotated[Optional[str], typer.Option(envvar="TTS_API_KEY", help="Text-to-Speech API key")] = None,
-        tts_lang: Annotated[str, typer.Option(envvar="TTS_LANG", help="Text-to-Speech language")] = "en-US",
-        tts_voice: Annotated[str, typer.Option(envvar="TTS_VOICE", help="Text-to-Speech voice")] = "en-GB-Standard-A",
-        avatar_path: Annotated[str, typer.Option(envvar="AVATAR_PATH", help="Path to avatar image")] = "https://models.readyplayer.me/64bfa15f0e72c63d7c3934a6.glb?morphTargets=ARKit,Oculus+Visemes,mouthOpen,mouthSmile,eyesClosed,eyesLookUp,eyesLookDown&textureSizeLimit=1024&textureFormat=png",
+    # fastapi parameters
+    host: Annotated[str, typer.Option("--host", help="Host address")] = "127.0.0.1",
+    port: Annotated[int, typer.Option("--port", help="Port number")] = 8080,
+    workers: Annotated[Optional[int], typer.Option("--workers", help="Number of workers")] = None,
+    reload: Annotated[bool, typer.Option("--reload", help="Enable auto-reload")] = False,
+    # API keys
+    gemini_api_key: Annotated[Optional[str], typer.Option(envvar="GEMINI_API_KEY", help="Google Gemini API key")] = None,
+    tts_api_key: Annotated[Optional[str], typer.Option(envvar="TTS_API_KEY", help="Text-to-Speech API key")] = None,
+    # runtime configuration
+    tts_lang: Annotated[str, typer.Option("--tts-lang", help="Text-to-Speech language")] = "en-US",
+    tts_voice: Annotated[str, typer.Option("--tts-voice", help="Text-to-Speech voice")] = "en-GB-Standard-A",
+    avatar_path: Annotated[str, typer.Option("--avatar-path", help="Path to avatar model")] = "https://models.readyplayer.me/64bfa15f0e72c63d7c3934a6.glb",
+    google_search_grounding: Annotated[bool, typer.Option("--google-search-grounding", help="Enable Google Search grounding")] = False,
+    mcp_server_config: Annotated[Optional[str], typer.Option("--mcp-server-config", help="MCP server configuration file path")] = None,
 ) -> None:
     """
-    Start the Quack2Tex application with optional Gemini and TTS API configurations.
-    You can pass API keys via command-line flags or environment variables.
+    Start the FastAPI-based Gemini Avatar app with runtime configurations.
     """
-    api_keys = {
-        "GEMINI_API_KEY": gemini_api_key,
-        "TTS_API_KEY": tts_api_key,
-        "TTS_LANG": tts_lang,
-        "TTS_VOICE": tts_voice,
-        "AVATAR_PATH": avatar_path,
-    }
 
-    for key, value in api_keys.items():
-        if value:
-            os.environ[key] = value
-            logging.info(f"Set {key} from input")
+    # Set config values from CLI args into the global config instance
+    runtime_config.google_search_grounding = google_search_grounding
+    runtime_config.tts_lang = tts_lang
+    runtime_config.tts_voice = tts_voice
+    runtime_config.avatar_path = avatar_path
+    runtime_config.mcp_server_config = mcp_server_config
+
+    logging.info(f"RuntimeConfig: {runtime_config}")
+
+    # Set environment variables if keys are passed
+    if gemini_api_key:
+        os.environ["GEMINI_API_KEY"] = gemini_api_key
+        logging.info("Set GEMINI_API_KEY from input")
+
+    if tts_api_key:
+        os.environ["TTS_API_KEY"] = tts_api_key
+        logging.info("Set TTS_API_KEY from input")
 
     dispatch_fastapi_app("gemini_live_avatar.app:app", host, port, workers, reload)
 

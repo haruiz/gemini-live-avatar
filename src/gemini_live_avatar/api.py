@@ -12,11 +12,15 @@ from fastapi.middleware.cors import CORSMiddleware
 from google import genai
 from google.genai import types
 from google.genai.types import (
-    LiveConnectConfig, Modality, LiveServerContent
+    LiveConnectConfig, Modality, LiveServerContent, RealtimeInputConfig, AutomaticActivityDetection, StartSensitivity,
+    EndSensitivity
 )
+from mcp import StdioServerParameters
 from starlette.websockets import WebSocketDisconnect
 
+from gemini_live_avatar.mcp_server import MCPClient
 from gemini_live_avatar.session import SessionState, create_session, remove_session
+from gemini_live_avatar.config import runtime_config
 
 # Load environment variables
 load_dotenv(find_dotenv())
@@ -68,36 +72,24 @@ async def send_error_message(ws: WebSocket, error_data: dict):
     except Exception as e:
         logger.error(f"Failed to send error message: {e}")
 
-async def create_gemini_live_session():
-    turn_on_the_lights = {
-        "name": "turn_on_the_lights",
-        "description": "Turn on the lights in the room.",
-        "parameters": {
-            "type": "object",
-            "properties": {
-                "color": {
-                    "type": "string",
-                    "description": "The color to set the lights in hex format (e.g., #FFFFFF for white).",
-                    "default": "#FFFFFF"
-                },
-            },
-            "required": ["color"]
-        }
-    }
-    turn_off_the_lights = {"name": "turn_off_the_lights"}
-    tools = [
-        {"google_search": {}},
-        {"code_execution": {}},
-        {"function_declarations": [turn_on_the_lights, turn_off_the_lights]},
-    ]
+async def create_gemini_live_session(tools):
+
     return client.aio.live.connect(
-        model="gemini-2.0-flash-live-001",
+        model=runtime_config.model_name,
         config=LiveConnectConfig(
             tools=tools,
             system_instruction=get_system_instruction(),
-            response_modalities=[Modality.TEXT]
+            response_modalities=[Modality.TEXT],
+            realtime_input_config=RealtimeInputConfig(
+                automatic_activity_detection=AutomaticActivityDetection(
+                    disabled=False,
+                    start_of_speech_sensitivity=StartSensitivity.START_SENSITIVITY_LOW,
+                    end_of_speech_sensitivity=EndSensitivity.END_SENSITIVITY_LOW,
+                )
+            )
         )
     )
+
 
 @api.websocket("/ws/live")
 async def websocket_receiver(websocket: WebSocket):
@@ -105,8 +97,61 @@ async def websocket_receiver(websocket: WebSocket):
     session = create_session(session_id)
 
     try:
-        async with await create_gemini_live_session() as live_session:
+        # Define tool: Turn on the lights
+        turn_on_the_lights = types.FunctionDeclaration(
+            name="turn_on_the_lights",
+            description="Turn on the lights in the room.",
+            parameters={
+                "type": "object",
+                "properties": {
+                    "color": {
+                        "type": "string",
+                        "description": "The color to set the lights in hex format (e.g., #FFFFFF for white).",
+                        "default": "#FFFFFF"
+                    }
+                },
+                "required": ["color"]
+            }
+        )
+
+        # Define tool: Turn off the lights
+        turn_off_the_lights = types.FunctionDeclaration(
+            name="turn_off_the_lights",
+            description="Turn off the lights in the room.",
+            parameters={
+                "type": "object",
+                "properties": {},
+                "required": []
+            }
+        )
+
+        # Wrap in Tool class
+        default_tools = [
+            types.Tool(function_declarations=[
+                turn_on_the_lights, turn_off_the_lights
+            ])
+        ]
+
+        tools = []
+        tools.extend(default_tools)
+        if runtime_config.mcp_server_config:
+            logger.info("MCP Server configuration found, initializing MCP client")
+            mcp_server = MCPClient.from_json_config(runtime_config.mcp_server_config)
+            session.mcp_server_client = mcp_server
+            await mcp_server.connect_to_server()
+            mcp_tools = await mcp_server.get_tools_for_gemini()
+            if mcp_tools:
+                logger.info(f"Using MCP tools: {[tool.function_declarations[0].name for tool in mcp_tools]}")
+                tools.extend(mcp_tools)
+
+        if runtime_config.google_search_grounding:
+            logger.info("Google Search Grounding enabled")
+            tools.insert(0, {"google_search": {}})
+
+
+        async with await create_gemini_live_session(tools=tools) as live_session:
             session.live_session = live_session
+
             await handle_messages(websocket, session)
     except asyncio.TimeoutError:
         await send_error_message(websocket, {
@@ -134,9 +179,9 @@ async def handle_messages(ws: WebSocket, session: SessionState):
         await ws.send_json({
             "type": "config",
             "ttsApikey": os.environ.get("TTS_API_KEY"),
-            "ttsLang": os.environ.get("TTS_LANG", "en-US"),
-            "ttsVoice": os.environ.get("TTS_VOICE", "en-GB-Standard-A"),
-            "avatarPath": os.environ.get("AVATAR_PATH")
+            "ttsLang": runtime_config.tts_lang,
+            "ttsVoice": runtime_config.tts_voice,
+            "avatarPath": runtime_config.avatar_path
         })
 
         async with asyncio.TaskGroup() as tg:
@@ -166,7 +211,6 @@ async def handle_user_messages(ws: WebSocket, session: SessionState):
                 return
             msg_type = data.get("type")
             ms_data = data.get("data", None)
-
             logger.info(f"Received message: {msg_type}")
 
             if msg_type == "audio":
@@ -250,66 +294,100 @@ async def cleanup_session(session: SessionState, session_id: str):
             except Exception as e:
                 logger.error(f"Error closing Gemini session: {e}")
 
+        if session.mcp_server_client:
+            try:
+                await session.mcp_server_client.close()
+            except Exception as e:
+                logger.error(f"Error closing MCP session: {e}")
+
         remove_session(session_id)
         logger.info(f"Session {session_id} cleaned up.")
     except Exception as e:
         logger.error(f"Error during cleanup: {e}")
 
 
-async def process_function_calls(queue: asyncio.Queue, websocket: WebSocket, session: SessionState):
-    """Process tool calls from the queue."""
+
+async def process_function_calls(queue: asyncio.Queue, websocket: WebSocket, session: "SessionState"):
+    """Continuously process function/tool calls from the queue."""
     while True:
         tool_call = await queue.get()
-        logger.info(f"Processing tool call: {tool_call}")
+        logger.info(f"📥 Received tool call: {tool_call}")
+
         try:
             function_responses = []
             for function_call in tool_call.function_calls:
-                # Store the tool execution in session state
                 session.current_tool_execution = asyncio.current_task()
+
+                mcp_server_client = session.mcp_server_client
+                try:
+                    if mcp_server_client:
+                        tool_names = await mcp_server_client.get_tools_names()
+                        if function_call.name in tool_names:
+                            logger.info(f"Executing MCP tool: {function_call.name} with args: {function_call.args}")
+                            tool_result = await mcp_server_client.execute_tool(
+                                tool_name=function_call.name,
+                                tool_args=function_call.args
+                            )
+                        else:
+                            logger.info(f"Tool {function_call.name} not found in MCP tools, handling as built-in function")
+                            tool_result = await handle_builtin_function(function_call)
+                    else:
+                        tool_result = await handle_builtin_function(function_call)
+
+
+                except Exception as tool_err:
+                    logger.exception(f"❌ Error during tool execution: {tool_err}")
+                    tool_result = f"Error executing function `{function_call.name}`: {tool_err}"
+
                 await websocket.send_json({
                     "type": "function_call",
                     "data": {
                         "name": function_call.name,
-                        "args": function_call.args
+                        "args": function_call.args,
+                        "result": tool_result
                     }
-                })
-
-                #tool_result = await execute_tool(function_call.name, function_call.args)
-                match function_call.name:
-                    case "turn_on_the_lights":
-                        tool_result = "Lights turned on! 💡"
-                    case "turn_off_the_lights":
-                        tool_result = "Lights turned off! 🌙"
-                    case _:
-                        tool_result = f"Unknown function: {function_call.name}"
-                # Send function response to client
-                await websocket.send_json({
-                    "type": "function_response",
-                    "data": tool_result
                 })
 
                 function_responses.append(
                     types.FunctionResponse(
                         name=function_call.name,
                         id=function_call.id,
-                        response={
-                            "result": tool_result
-                        }
+                        response={"output": tool_result}
                     )
                 )
 
                 session.current_tool_execution = None
-            await session.live_session.send_tool_response(function_responses=function_responses)
+            if function_responses:
+                logger.info(f"📤 Sending function responses: {function_responses}")
+                await session.live_session.send_tool_response(function_responses=function_responses)
+
         except Exception as e:
-            logger.error(f"Error processing tool call: {e}")
+            logger.exception(f"❌ Exception in process_function_calls: {e}")
+
         finally:
             queue.task_done()
+
+
+async def handle_builtin_function(function_call):
+    """
+    Handle built-in functions not handled by MCP tools.
+    """
+    match function_call.name:
+        case "turn_on_the_lights":
+            return "Lights turned on! 💡"
+        case "turn_off_the_lights":
+            return "Lights turned off! 🌙"
+        case _:
+            return f"Unknown function: {function_call.name}"
+
 
 async def process_server_content(ws: WebSocket, session: SessionState, server_content: LiveServerContent):
 
     if not server_content:
         logger.warning("Received empty server content")
         return
+
+    logger.info(f"Processing server content: {server_content}")
 
     """Process server content and send to WebSocket."""
     if server_content.interrupted:
