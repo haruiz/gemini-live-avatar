@@ -76,6 +76,7 @@ export default class Avatar {
         lipsyncModules,
         cameraView,
         lightAmbientIntensity,
+        modelFPS: 60
       });
 
       await this.head.showAvatar(
@@ -85,7 +86,7 @@ export default class Avatar {
           avatarMood,
           ttsLang,
           ttsVoice,
-          lipsyncLang,
+          lipsyncLang
         },
         (ev) => {
           if (ev.lengthComputable) {

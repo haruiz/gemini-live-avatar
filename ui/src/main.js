@@ -82,7 +82,8 @@ geminiApi.onTurnComplete = () => {
 }
 
 geminiApi.onFunctionCall = (fn) => {
-    logMessage("debug", `🔧 Function call: ${fn.name} with args ${JSON.stringify(fn.args)}`);
+    console.log(fn);
+    logMessage("debug", `🔧 Function call: ${fn.name} with args ${JSON.stringify(fn.args)}, response: ${fn.result}`);
     // Handle function calls here if needed
     if( fn.name === "turn_on_the_lights") {
         avatar.playGesture("thumbup", 3);
