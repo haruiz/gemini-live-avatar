@@ -13,7 +13,7 @@
 - 📄 **Multimodal chat log** displaying user prompts and Gemini responses
 
 
-[![Watch the video](https://img.youtube.com/vi/tQq_UM15wog/maxresdefault.jpg)](https://youtu.be/aguEcJN-FNM)
+[![Watch the video](https://img.youtube.com/vi/tQq_UM15wog/maxresdefault.jpg)](https://youtu.be/tQq_UM15wog)
 
 ### 🧠 How It Works
 
