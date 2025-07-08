@@ -1,3 +1,4 @@
+import json
 import logging
 import os
 from typing import Optional
@@ -6,7 +7,7 @@ import typer
 from typing_extensions import Annotated
 from dotenv import load_dotenv, find_dotenv
 
-from .config import runtime_config  # <-- import the global config instance
+from .config import RuntimeConfig  # <-- import the global config instance
 
 # Load environment variables from a .env file
 load_dotenv(find_dotenv())
@@ -52,17 +53,27 @@ def start(
     avatar_path: Annotated[str, typer.Option("--avatar-path", help="Path to avatar model")] = "https://models.readyplayer.me/64bfa15f0e72c63d7c3934a6.glb",
     google_search_grounding: Annotated[bool, typer.Option("--google-search-grounding", help="Enable Google Search grounding")] = False,
     mcp_server_config: Annotated[Optional[str], typer.Option("--mcp-server-config", help="MCP server configuration file path")] = None,
+    response_modality : Annotated[str, typer.Option("--response-modality", help="Response modality (text, audio)")] = "text",
 ) -> None:
     """
     Start the FastAPI-based Gemini Avatar app with runtime configurations.
     """
 
     # Set config values from CLI args into the global config instance
+    runtime_config = RuntimeConfig()
     runtime_config.google_search_grounding = google_search_grounding
     runtime_config.tts_lang = tts_lang
     runtime_config.tts_voice = tts_voice
     runtime_config.avatar_path = avatar_path
     runtime_config.mcp_server_config = mcp_server_config
+    runtime_config.response_modality = response_modality
+
+    # saving config to  a file
+    config_file_path = "runtime_config.json"
+    with open(config_file_path, "w") as config_file:
+        json_config = runtime_config.model_dump_json(indent=4)
+        config_file.write(json_config)
+
 
     logging.info(f"RuntimeConfig: {runtime_config}")
 
@@ -75,6 +86,7 @@ def start(
         os.environ["TTS_API_KEY"] = tts_api_key
         logging.info("Set TTS_API_KEY from input")
 
+    # export runtime config to a file
     dispatch_fastapi_app("gemini_live_avatar.app:app", host, port, workers, reload)
 
 

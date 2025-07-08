@@ -66,7 +66,6 @@ export default class GeminiAPI {
   }
 
   _defaultMessageHandler(event) {
-    console.log("📬 Received message:", event.data);
     try {
       const data = JSON.parse(event.data);
       this.onMessageParsed(data);

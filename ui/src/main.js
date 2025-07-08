@@ -3,6 +3,8 @@ import MediaHandler from '/src/media/media-handler.js';
 import Avatar from '/src/avatar/index.js';
 import GeminiAPI from '/src/api/gemini.js';
 import AudioRecorder from '/src/audio/audio-recorder.js';
+import { AudioStreamer } from '/src/audio/audio-streamer.js';
+
 
 // === DOM Elements ===
 const textInput = document.getElementById('text');
@@ -14,6 +16,7 @@ const videoElement = document.getElementById('videoPreview');
 const nodeAvatar = document.getElementById('avatar');
 const nodeLoading = document.getElementById('loading');
 const outputBox = document.getElementById('outputBox');
+const transcriptBox = document.getElementById("liveTranscript");
 
 let avatar = null;
 let isUsingMic = false;
@@ -21,6 +24,35 @@ let isAvatarSpeaking = false;
 let isUsingCamera = false;
 let isSharingScreen = false;
 
+
+const mediaHandler = new MediaHandler(videoElement);
+const geminiApi = new GeminiAPI("ws://localhost:8080/api/ws/live");
+const audioRecorder = new AudioRecorder();
+const audioContext = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 24000 });
+const audioStreamer = new AudioStreamer(audioContext);
+let currentTurnText = "";
+let currentTurn = 0;
+let lastAudioTurn = -1;
+let hasShownSpeakingMessage = false;
+
+// transcription management
+let currentTranscriptIndex = -1;
+let transcriptWords = [];
+
+function updateTranscriptWords(words) {
+    transcriptBox.innerHTML = words.map((w, i) => `<span class="word" id="word-${i}">${w.word}</span>`).join(" ");
+}
+
+function highlightTranscriptWord(index) {
+    if (index === currentTranscriptIndex) return;
+    const prev = document.getElementById(`word-${currentTranscriptIndex}`);
+    if (prev) prev.classList.remove("active");
+
+    const current = document.getElementById(`word-${index}`);
+    if (current) current.classList.add("active");
+
+    currentTranscriptIndex = index;
+}
 // === Utils ===
 function togglePulse(button, active) {
     button.classList.toggle("pulse-effect", active);
@@ -31,13 +63,12 @@ function logMessage(sender, message) {
     const config = {
         user: {label: 'user@console', color: 'text-cyan-400', msgColor: 'text-green-300'},
         gemini: {label: 'gemini@core', color: 'text-purple-400', msgColor: 'text-green-300'},
-        debug: {label: '[debug]', color: 'text-yellow-400', msgColor: 'text-yellow-200'},
+        debug: {label: 'system@debug', color: 'text-yellow-400', msgColor: 'text-yellow-200'},
+        error: {label: 'system@error', color: 'text-red-400', msgColor: 'text-red-300'}
     };
 
     const {label, color, msgColor} = config[sender] || {
-        label: 'system',
-        color: 'text-white',
-        msgColor: 'text-gray-300'
+        label: 'unknown', color: 'text-gray-400', msgColor: 'text-gray-300'
     };
     line.innerHTML = `<span class="${color}">${label}</span>: <span class="${msgColor}">${message}</span>`;
     outputBox.appendChild(line);
@@ -53,12 +84,6 @@ function showPreviewAboveButton(button) {
     videoElement.classList.add("opacity-100");
 }
 
-const mediaHandler = new MediaHandler(videoElement);
-const geminiApi = new GeminiAPI("ws://localhost:8080/api/ws/live");
-const audioRecorder = new AudioRecorder();
-const audioContext = new (window.AudioContext || window.webkitAudioContext)({sampleRate: 24000});
-let currentTurnText = "";
-
 geminiApi.onReady = () => logMessage("debug", "✅ Gemini API is ready.");
 
 geminiApi.onTextContent = (outputText) => {
@@ -67,22 +92,136 @@ geminiApi.onTextContent = (outputText) => {
     }
 };
 
+const receivedChunks = [];
+
+
+function base64ToArrayBuffer(base64) {
+  const binaryString = atob(base64);
+  const bytes = new Uint8Array(binaryString.length);
+  for (let i = 0; i < binaryString.length; i++) {
+    bytes[i] = binaryString.charCodeAt(i);
+  }
+  return bytes.buffer;
+}
+
+function handleBase64Chunk(base64Audio) {
+  const binary = atob(base64Audio);
+  const buffer = new ArrayBuffer(binary.length);
+  const view = new Uint8Array(buffer);
+  for (let i = 0; i < binary.length; i++) {
+    view[i] = binary.charCodeAt(i);
+  }
+  receivedChunks.push(new Int16Array(buffer));
+}
+
+function playAllChunks() {
+  // Flatten all int16 chunks
+  const totalLength = receivedChunks.reduce((sum, chunk) => sum + chunk.length, 0);
+  const int16Combined = new Int16Array(totalLength);
+  let offset = 0;
+  for (const chunk of receivedChunks) {
+    int16Combined.set(chunk, offset);
+    offset += chunk.length;
+  }
+
+  // Convert to Float32
+  const float32Array = new Float32Array(int16Combined.length);
+  for (let i = 0; i < int16Combined.length; i++) {
+    float32Array[i] = int16Combined[i] / 32768;
+  }
+
+  const audioBuffer = audioContext.createBuffer(1, float32Array.length, audioContext.sampleRate);
+  audioBuffer.copyToChannel(float32Array, 0);
+
+  const source = audioContext.createBufferSource();
+  source.buffer = audioBuffer;
+  source.connect(audioContext.destination);
+  source.start();
+  avatar.speakAudio(audioBuffer);
+}
+
 geminiApi.onTurnComplete = () => {
     logMessage("debug", "🔄 Turn complete.");
     if (currentTurnText.trim()) {
         if (avatar) {
             isAvatarSpeaking = true;
             logMessage("gemini", currentTurnText);
-            avatar.speak(currentTurnText);
+            avatar.speakText(currentTurnText);
         } else {
             logMessage("debug", "⚠️ Avatar not loaded, skipping speech.");
         }
     }
+    geminiApi.isSpeaking = false;
     currentTurnText = "";
+    lastAudioTurn = currentTurn;
+    audioStreamer.complete();
+
+    // Clear audio chunks if any
+    if (receivedChunks.length > 0) {
+        receivedChunks.length = 0;
+    }
+
+    // ✅ Reset live transcript
+    transcriptBox.innerHTML = "";
+    transcriptWords = [];
+    currentTranscriptIndex = -1;
+    transcriptBox.classList.add("hidden");
+
 }
 
+geminiApi.onAudioData = async (audioMesage) => {
+    try {
+
+      let audioData = audioMesage.audio
+      let audioWords = audioMesage.words;
+
+
+    if (!geminiApi.isSpeaking || lastAudioTurn !== currentTurn) {
+      logMessage("debug", "🔊 Playing audio data...");
+      geminiApi.isSpeaking = true;
+      lastAudioTurn = currentTurn;
+    }
+
+    // Ensure audioData is base64 string
+    if (typeof audioData !== "string") {
+      console.error("Expected base64-encoded audio string, got:", typeof audioData);
+      return;
+    }
+    // Decode base64 to ArrayBuffer
+    const arrayBuffer = base64ToArrayBuffer(audioData);
+    const int16Array = new Int16Array(arrayBuffer);
+    const float32Array = new Float32Array(int16Array.length);
+    //
+    for (let i = 0; i < int16Array.length; i++) {
+      float32Array[i] = int16Array[i] / 32768;
+    }
+    //
+    // play user streamer
+    // const audioBuffer = audioContext.createBuffer(1, float32Array.length, audioContext.sampleRate);
+    // audioBuffer.getChannelData(0).set(float32Array);
+   ////audioStreamer.addPCM16(new Uint8Array(arrayBuffer));
+    //audioStreamer.resume();
+
+  // play audio using AudioContext
+
+  // const audioBuffer = audioContext.createBuffer(1, float32Array.length, audioContext.sampleRate);
+  // audioBuffer.copyToChannel(float32Array, 0);
+  // const source = audioContext.createBufferSource();
+  // source.buffer = audioBuffer;
+  // source.connect(audioContext.destination);
+  // source.start();
+  // console.log("Speaking audio with words:", audioWords);
+
+  await avatar.speakAudio(int16Array, audioWords);
+
+
+  } catch (error) {
+    console.error("Error playing audio:", error);
+  }
+};
+
+
 geminiApi.onFunctionCall = (fn) => {
-    console.log(fn);
     logMessage("debug", `🔧 Function call: ${fn.name} with args ${JSON.stringify(fn.args)}, response: ${fn.result}`);
     // Handle function calls here if needed
     if( fn.name === "turn_on_the_lights") {
@@ -113,20 +252,52 @@ geminiApi.onFunctionCall = (fn) => {
     }
 }
 
-geminiApi.onMessageParsed = async (data) => {
-    //logMessage("debug", `📬 Parsed message: ${JSON.stringify(data, null, 2)}`);
 
-    if (data.type === "config") {
+geminiApi.onMessageParsed = async (message) => {
+    //logMessage("debug", `📬 Parsed message: ${JSON.stringify(data, null, 2)}`);
+    if (message.type === "config") {
+
+        //logMessage("debug", `📬 Configuration received: ${JSON.stringify(message, null, 2)}`);
         avatar = new Avatar(nodeAvatar, {
             ttsEndpoint: "https://texttospeech.googleapis.com/v1beta1/text:synthesize",
-            ttsApikey: data.ttsApikey,
+            ttsApikey: message.ttsApikey,
             lipsyncModules: ["en"],
             cameraView: "upper",
             lightAmbientIntensity: 1,
-            ttsLang: data.ttsLang,
-            ttsVoice: data.ttsVoice,
-            avatarPath : data.avatarPath,
+            ttsLang: message.ttsLang,
+            ttsVoice: message.ttsVoice,
+            avatarPath : message.avatarPath,
         });
+
+        avatar.onTranscript = (currentWord) => {
+                if (currentWord.trim()) {
+                // Show transcript box
+                if (transcriptBox.classList.contains("hidden")) {
+                    transcriptBox.classList.remove("hidden");
+                }
+
+                // Add word to live transcript
+                const wordId = `word-${transcriptWords.length}`;
+                const span = document.createElement("span");
+                span.className = "word";
+                span.id = wordId;
+                span.textContent = currentWord;
+                transcriptBox.appendChild(span);
+
+                // Scroll to bottom if needed
+                transcriptBox.scrollTop = transcriptBox.scrollHeight;
+
+                // Highlight the new word
+                if (currentTranscriptIndex >= 0) {
+                    const prev = document.getElementById(`word-${currentTranscriptIndex}`);
+                    if (prev) prev.classList.remove("active");
+                }
+                span.classList.add("active");
+                currentTranscriptIndex = transcriptWords.length;
+
+                transcriptWords.push(currentWord);
+            }
+        }
 
         avatar.onLoading = (status, progress) => {
             if (status === "start") {
@@ -146,6 +317,12 @@ geminiApi.onMessageParsed = async (data) => {
             nodeLoading.style.display = "none";
             logMessage("debug", `❌ Avatar loading error: ${err.message}`);
         }
+    }
+    else if (message.type === "error") {
+        logMessage("error", `❌ Error from Server: ${message.data?.message}`);
+    }
+    else if( message.type === "debug") {
+        logMessage("debug", `ℹ️ Info from Server: ${message.data?.message}`);
     }
 };
 
@@ -224,8 +401,6 @@ document.addEventListener("visibilitychange", () => {
     }
 });
 
-let currentTurn = 0;
-let hasShownSpeakingMessage = false;
 
 async function startRecording() {
     try {

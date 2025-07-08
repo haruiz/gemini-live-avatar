@@ -11,6 +11,7 @@ dependencies = [
     "fastapi[standard]>=0.115.12",
     "google-genai>=1.16.1",
     "pillow>=11.2.1",
+    "pydantic>=2.11.7",
     "python-dotenv>=1.1.0",
     "rich>=14.0.0",
     "typer>=0.16.0",
@@ -31,6 +32,9 @@ gemini-live-avatar = "gemini_live_avatar.cli:app"
 mcp-demo = [
     "fastapi-mcp>=0.3.4",
     "mcp[cli]>=1.9.2",
+]
+lipssync = [
+    "whisperx>=3.4.2",
 ]
 
 [tool.hatch.build]
