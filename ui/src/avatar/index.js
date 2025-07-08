@@ -1,6 +1,5 @@
 import { TalkingHead } from "talkinghead";
 
-
 /**
  * Ensures the given URL is a valid Ready Player Me model URL
  * and appends only missing required query parameters.
@@ -36,11 +35,6 @@ function formatReadyPlayerMeURL(url) {
   }
 }
 
-// Example usage
-const inputUrl = "https://models.readyplayer.me/64bfa15f0e72c63d7c3934a6.glb?textureSizeLimit=2048";
-const formattedUrl = formatReadyPlayerMeURL(inputUrl);
-console.log(formattedUrl);
-
 
 
 export default class Avatar {
@@ -48,6 +42,8 @@ export default class Avatar {
     this.nodeAvatar = nodeAvatar;
     this.config = config;
     this.head = null;
+    this.isStreaming = false;
+    this.onTranscript = (currentWord) => {}
     this.onLoading = (status, progress) => {
       console.log(`Avatar loading: ${status}`, progress ? `Progress: ${progress.percent}%` : "");
     }
@@ -107,8 +103,44 @@ export default class Avatar {
    * Make the avatar speak a given text.
    * @param {string} text
    */
-  speak(text) {
-    this.head?.speakText?.(text);
+  speakText(text) {
+    this.head?.speakText(text);
+  }
+
+  async speakAudio(audioData, opts = {}) {
+    try {
+      console.log("🎤 Avatar speaking audio data:", audioData);
+      if (!this.isStreaming) {
+          console.log("Starting audio stream...");
+          await this.head.streamStart(
+              {sampleRate: 24000, mood: "happy", lipsyncType: "words", gain: 3.0},
+              () => {
+                console.log("Audio playback started.");
+              },
+              () => {
+                console.log("Audio playback ended.");
+                this.isStreaming = false;
+              },
+              (subtitleText) => {
+                console.log("subtitleText: ", subtitleText);
+                if (subtitleText) {
+                  this.onTranscript(subtitleText);
+                }
+              }
+          );
+      }
+     console.log(opts);
+      this.head.streamAudio({
+        audio: audioData,
+        words : opts.words,
+        wtimes : opts.wtimes || [],
+        wdurations : opts.wdurations || [],
+      });
+      // this.head.speakAudio(audioData, opts);
+    }
+    catch (err) {
+      console.error("❌ Error speaking audio data:", err);
+    }
   }
 
   /**

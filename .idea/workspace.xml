@@ -5,15 +5,30 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="2dc9cfd3-06d8-4a7b-8faf-c12aad0f7d42" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/material_theme_project_new.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/material_theme_project_new.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/vcs.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Makefile" beforeDir="false" afterPath="$PROJECT_DIR$/Makefile" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/pyproject.toml" beforeDir="false" afterPath="$PROJECT_DIR$/pyproject.toml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/run.sh" beforeDir="false" afterPath="$PROJECT_DIR$/run.sh" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/gemini_live_avatar/api.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/gemini_live_avatar/api.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/gemini_live_avatar/cli.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/gemini_live_avatar/cli.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/gemini_live_avatar/session.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/gemini_live_avatar/session.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/gemini_live_avatar/site/assets/index-Ymjtz1Pn.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/gemini_live_avatar/config.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/gemini_live_avatar/config.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/gemini_live_avatar/site/assets/index-BqCovb2I.css" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/gemini_live_avatar/site/assets/index-sBJnMR9X.js" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/src/gemini_live_avatar/site/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/src/gemini_live_avatar/site/index.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ui/TalkingHead/modules/talkinghead.mjs" beforeDir="false" afterPath="$PROJECT_DIR$/ui/TalkingHead/modules/talkinghead.mjs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ui/index-copy.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ui/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/ui/index.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ui/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/ui/package.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ui/src/api/gemini.js" beforeDir="false" afterPath="$PROJECT_DIR$/ui/src/api/gemini.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ui/src/avatar/index.js" beforeDir="false" afterPath="$PROJECT_DIR$/ui/src/avatar/index.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ui/src/main-copy.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ui/src/main.js" beforeDir="false" afterPath="$PROJECT_DIR$/ui/src/main.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ui/src/style.css" beforeDir="false" afterPath="$PROJECT_DIR$/ui/src/style.css" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ui/vite.config.js" beforeDir="false" afterPath="$PROJECT_DIR$/ui/vite.config.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ui/yarn.lock" beforeDir="false" afterPath="$PROJECT_DIR$/ui/yarn.lock" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/uv.lock" beforeDir="false" afterPath="$PROJECT_DIR$/uv.lock" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -25,6 +40,7 @@
     <option name="RECENT_TEMPLATES">
       <list>
         <option value="JavaScript File" />
+        <option value="HTML File" />
         <option value="Python Script" />
       </list>
     </option>
@@ -57,13 +73,15 @@
   </component>
   <component name="PropertiesComponent"><![CDATA[{
   "keyToString": {
+    "DefaultHtmlFileTemplate": "HTML File",
     "ModuleVcsDetector.initialDetectionPerformed": "true",
     "Python.mcp_server.executor": "Run",
     "Python.my_mcp_server.executor": "Run",
+    "Python.viseme_generator.executor": "Run",
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "RunOnceActivity.git.unshallow": "true",
     "SHELLCHECK.PATH": "/Users/haruiz/Library/Application Support/JetBrains/PyCharm2025.1/plugins/Shell Script/shellcheck",
-    "git-widget-placeholder": "main",
+    "git-widget-placeholder": "dev",
     "last_opened_file_path": "/Users/haruiz/open-source/gemini-live-avatar",
     "node.js.detected.package.eslint": "true",
     "node.js.detected.package.tslint": "true",
@@ -128,9 +146,33 @@
       <option name="INPUT_FILE" value="" />
       <method v="2" />
     </configuration>
+    <configuration name="viseme_generator" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="gemini-live-avatar" />
+      <option name="ENV_FILES" value="" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/viseme_generator.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
     <recent_temporary>
       <list>
         <item itemvalue="Python.my_mcp_server" />
+        <item itemvalue="Python.viseme_generator" />
         <item itemvalue="Python.mcp_server" />
       </list>
     </recent_temporary>
@@ -154,6 +196,9 @@
       <workItem from="1748451477961" duration="12002000" />
       <workItem from="1748464745707" duration="9000" />
       <workItem from="1748464788093" duration="66139000" />
+      <workItem from="1750971262825" duration="11958000" />
+      <workItem from="1751895714022" duration="26461000" />
+      <workItem from="1751984836694" duration="21495000" />
     </task>
     <servers />
   </component>
@@ -161,7 +206,8 @@
     <option name="version" value="3" />
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
+    <SUITE FILE_PATH="coverage/gemini_live_avatar$viseme_generator.coverage" NAME="viseme_generator Coverage Results" MODIFIED="1751999993528" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/gemini_live_avatar$mcp_server.coverage" NAME="mcp_server Coverage Results" MODIFIED="1748663963084" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/src/gemini_live_avatar" />
-    <SUITE FILE_PATH="coverage/gemini_live_avatar$my_mcp_server.coverage" NAME="my_mcp_server Coverage Results" MODIFIED="1748796211428" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/examples" />
+    <SUITE FILE_PATH="coverage/gemini_live_avatar$my_mcp_server.coverage" NAME="my_mcp_server Coverage Results" MODIFIED="1752011146966" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/examples" />
   </component>
 </project>
