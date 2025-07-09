@@ -34,7 +34,7 @@ def dispatch_fastapi_app(
 
     logging.info(f"Starting FastAPI app on {host}:{port} with {workers} workers (reload={reload})")
     import uvicorn
-    uvicorn.run(app, host=host, port=port, workers=workers, reload=reload)
+    uvicorn.run(app, host=host, port=port, workers=workers, reload=reload,timeout_graceful_shutdown = 1, timeout_keep_alive=5)
 
 
 @app.command(name="start")

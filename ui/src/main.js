@@ -38,21 +38,9 @@ let hasShownSpeakingMessage = false;
 // transcription management
 let currentTranscriptIndex = -1;
 let transcriptWords = [];
+const receivedChunks = [];
 
-function updateTranscriptWords(words) {
-    transcriptBox.innerHTML = words.map((w, i) => `<span class="word" id="word-${i}">${w.word}</span>`).join(" ");
-}
 
-function highlightTranscriptWord(index) {
-    if (index === currentTranscriptIndex) return;
-    const prev = document.getElementById(`word-${currentTranscriptIndex}`);
-    if (prev) prev.classList.remove("active");
-
-    const current = document.getElementById(`word-${index}`);
-    if (current) current.classList.add("active");
-
-    currentTranscriptIndex = index;
-}
 // === Utils ===
 function togglePulse(button, active) {
     button.classList.toggle("pulse-effect", active);
@@ -91,9 +79,6 @@ geminiApi.onTextContent = (outputText) => {
         currentTurnText += outputText;
     }
 };
-
-const receivedChunks = [];
-
 
 function base64ToArrayBuffer(base64) {
   const binaryString = atob(base64);
@@ -214,7 +199,6 @@ geminiApi.onAudioData = async (audioMesage) => {
 
   await avatar.speakAudio(int16Array, audioWords);
 
-
   } catch (error) {
     console.error("Error playing audio:", error);
   }
@@ -270,33 +254,33 @@ geminiApi.onMessageParsed = async (message) => {
         });
 
         avatar.onTranscript = (currentWord) => {
-                if (currentWord.trim()) {
-                // Show transcript box
-                if (transcriptBox.classList.contains("hidden")) {
-                    transcriptBox.classList.remove("hidden");
-                }
-
-                // Add word to live transcript
-                const wordId = `word-${transcriptWords.length}`;
-                const span = document.createElement("span");
-                span.className = "word";
-                span.id = wordId;
-                span.textContent = currentWord;
-                transcriptBox.appendChild(span);
-
-                // Scroll to bottom if needed
-                transcriptBox.scrollTop = transcriptBox.scrollHeight;
-
-                // Highlight the new word
-                if (currentTranscriptIndex >= 0) {
-                    const prev = document.getElementById(`word-${currentTranscriptIndex}`);
-                    if (prev) prev.classList.remove("active");
-                }
-                span.classList.add("active");
-                currentTranscriptIndex = transcriptWords.length;
-
-                transcriptWords.push(currentWord);
+            if (currentWord.trim()) {
+            // Show transcript box
+            if (transcriptBox.classList.contains("hidden")) {
+                transcriptBox.classList.remove("hidden");
             }
+
+            // Add word to live transcript
+            const wordId = `word-${transcriptWords.length}`;
+            const span = document.createElement("span");
+            span.className = "word";
+            span.id = wordId;
+            span.textContent = currentWord;
+            transcriptBox.appendChild(span);
+
+            // Scroll to bottom if needed
+            transcriptBox.scrollTop = transcriptBox.scrollHeight;
+
+            // Highlight the new word
+            if (currentTranscriptIndex >= 0) {
+                const prev = document.getElementById(`word-${currentTranscriptIndex}`);
+                if (prev) prev.classList.remove("active");
+            }
+            span.classList.add("active");
+            currentTranscriptIndex = transcriptWords.length;
+
+            transcriptWords.push(currentWord);
+        }
         }
 
         avatar.onLoading = (status, progress) => {
@@ -323,6 +307,9 @@ geminiApi.onMessageParsed = async (message) => {
     }
     else if( message.type === "debug") {
         logMessage("debug", `ℹ️ Info from Server: ${message.data?.message}`);
+    }
+    else if (message.type === "go_away") {
+        console.log("Time left to go away:", message.data);
     }
 };
 

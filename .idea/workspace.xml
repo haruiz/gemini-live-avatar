@@ -5,30 +5,13 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="2dc9cfd3-06d8-4a7b-8faf-c12aad0f7d42" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/material_theme_project_new.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/material_theme_project_new.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/vcs.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Makefile" beforeDir="false" afterPath="$PROJECT_DIR$/Makefile" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pyproject.toml" beforeDir="false" afterPath="$PROJECT_DIR$/pyproject.toml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/run.sh" beforeDir="false" afterPath="$PROJECT_DIR$/run.sh" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/gemini_live_avatar/api.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/gemini_live_avatar/api.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/gemini_live_avatar/cli.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/gemini_live_avatar/cli.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/gemini_live_avatar/config.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/gemini_live_avatar/config.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/gemini_live_avatar/site/assets/index-BqCovb2I.css" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/gemini_live_avatar/site/assets/index-sBJnMR9X.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/gemini_live_avatar/site/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/src/gemini_live_avatar/site/index.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/gemini_live_avatar/word_generator.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/gemini_live_avatar/word_generator.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/ui/TalkingHead/modules/talkinghead.mjs" beforeDir="false" afterPath="$PROJECT_DIR$/ui/TalkingHead/modules/talkinghead.mjs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ui/index-copy.html" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/ui/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/ui/index.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ui/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/ui/package.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ui/src/api/gemini.js" beforeDir="false" afterPath="$PROJECT_DIR$/ui/src/api/gemini.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ui/src/avatar/index.js" beforeDir="false" afterPath="$PROJECT_DIR$/ui/src/avatar/index.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ui/src/main-copy.js" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/ui/src/main.js" beforeDir="false" afterPath="$PROJECT_DIR$/ui/src/main.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ui/src/style.css" beforeDir="false" afterPath="$PROJECT_DIR$/ui/src/style.css" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ui/vite.config.js" beforeDir="false" afterPath="$PROJECT_DIR$/ui/vite.config.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ui/yarn.lock" beforeDir="false" afterPath="$PROJECT_DIR$/ui/yarn.lock" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/uv.lock" beforeDir="false" afterPath="$PROJECT_DIR$/uv.lock" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -198,7 +181,7 @@
       <workItem from="1748464788093" duration="66139000" />
       <workItem from="1750971262825" duration="11958000" />
       <workItem from="1751895714022" duration="26461000" />
-      <workItem from="1751984836694" duration="21495000" />
+      <workItem from="1751984836694" duration="34311000" />
     </task>
     <servers />
   </component>

@@ -63,7 +63,9 @@ class WordGenerator(metaclass=Singleton):
         )
 
         logger.info("🧩 Parsing aligned phonemes...")
-        return self._parse_alignment(aligned)
+        result =  self._parse_alignment(aligned)
+        logger.info("✅ Alignment completed successfully.")
+        return result
 
     @staticmethod
     @lru_cache(maxsize=4)

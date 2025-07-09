@@ -7,6 +7,7 @@ import logging
 import os
 import tempfile
 import traceback
+import typing
 import uuid
 import wave
 from asyncio import to_thread
@@ -21,7 +22,8 @@ from google import genai
 from google.genai import types
 from google.genai.types import (
     LiveConnectConfig, Modality, LiveServerContent, RealtimeInputConfig, AutomaticActivityDetection, StartSensitivity,
-    EndSensitivity, AudioTranscriptionConfig, LiveServerMessage, SpeechConfig, VoiceConfig, PrebuiltVoiceConfig
+    EndSensitivity, AudioTranscriptionConfig, LiveServerMessage, SpeechConfig, VoiceConfig, PrebuiltVoiceConfig,
+    SessionResumptionConfig
 )
 from starlette.websockets import WebSocketDisconnect
 
@@ -37,6 +39,7 @@ word_generator = WordGenerator(model_size="small", compute_type="float32")
 
 
 task_registry: set[asyncio.Task] = set()
+session_registry:dict[str, SessionState] = {}
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("rich")
@@ -59,6 +62,27 @@ async def lifespan(app: FastAPI):
     logger.info("Starting Gemini Live Avatar API")
     yield
     logger.info("Shutting down Gemini Live Avatar API")
+    await kill_ongoing_tasks_if_any()
+
+    await kill_all_sessions_if_any()
+
+
+async def kill_all_sessions_if_any():
+    # Remove all sessions
+    for session_id in list(session_registry.keys()):
+        session = session_registry[session_id]
+        try:
+            if session.live_session:
+                await session.live_session.close()
+            if session.mcp_server_client:
+                await session.mcp_server_client.close()
+        except Exception as e:
+            logger.error(f"Error closing session {session_id}: {e}")
+        finally:
+            remove_session(session_id)
+
+
+async def kill_ongoing_tasks_if_any():
     for task in task_registry:
         task.cancel()
         try:
@@ -112,35 +136,6 @@ async def send_debug_message(ws: WebSocket, debug_data: dict):
             logger.warning("⚠️ Attempted to send on closed WebSocket.")
     except Exception as e:
         logger.error(f"Failed to send debug message: {e}")
-
-async def create_gemini_live_session(tools, runtime_config):
-
-    logger.info(f"Creating session with Gemini Live using configurations: {runtime_config}")
-    response_modalities = [Modality.AUDIO]  if runtime_config.response_modality == "audio"  else [Modality.TEXT]
-
-    return client.aio.live.connect(
-        model=runtime_config.model_name,
-        config=LiveConnectConfig(
-            tools=tools,
-            system_instruction=get_system_instruction(),
-            response_modalities=response_modalities,
-            output_audio_transcription=AudioTranscriptionConfig(),
-            speech_config=SpeechConfig(
-                voice_config=VoiceConfig(
-                    prebuilt_voice_config=PrebuiltVoiceConfig(
-                        voice_name="Kore"
-                    )
-                )
-            ),
-            realtime_input_config=RealtimeInputConfig(
-                automatic_activity_detection=AutomaticActivityDetection(
-                    disabled=False,
-                    start_of_speech_sensitivity=StartSensitivity.START_SENSITIVITY_LOW,
-                    end_of_speech_sensitivity=EndSensitivity.END_SENSITIVITY_LOW,
-                )
-            )
-        )
-    )
 
 def get_default_tools() -> list[types.Tool]:
     """
@@ -243,12 +238,47 @@ async def get_avatar_tools(runtime_config, ws) -> Tuple[MCPClient, List[types.To
 
     return mcp_client, tools
 
+async def create_gemini_live_session(model_name: str, tools: typing.List[types.Tool], response_modality="text",
+                session_handle: str = None):
+    """
+    Create a Gemini live session with the specified tools and response modality.
+    If a session handle is provided, it will resume the session with that handle.
+    """
+
+    response_modalities = [Modality.AUDIO] if response_modality == "audio" else [Modality.TEXT]
+    return client.aio.live.connect(
+        model=model_name,
+        config=LiveConnectConfig(
+            tools=tools,
+            system_instruction=get_system_instruction(),
+            response_modalities=response_modalities,
+            output_audio_transcription=AudioTranscriptionConfig(),
+            speech_config=SpeechConfig(
+                voice_config=VoiceConfig(
+                    prebuilt_voice_config=PrebuiltVoiceConfig(
+                        voice_name="Kore"
+                    )
+                )
+            ),
+            realtime_input_config=RealtimeInputConfig(
+                automatic_activity_detection=AutomaticActivityDetection(
+                    disabled=False,
+                    start_of_speech_sensitivity=StartSensitivity.START_SENSITIVITY_LOW,
+                    end_of_speech_sensitivity=EndSensitivity.END_SENSITIVITY_LOW,
+                )
+            ),
+            session_resumption=SessionResumptionConfig(
+                handle=session_handle
+            )
+        )
+    )
 
 
 @api.websocket("/ws/live")
 async def websocket_receiver(ws: WebSocket, runtime_config: RuntimeConfig = Depends(get_runtime_config)):
     session_id = uuid.uuid4().hex
     session = create_session(session_id)
+    session_registry[session_id] = session
     try:
         await ws.accept()
         await ws.send_json({
@@ -263,8 +293,9 @@ async def websocket_receiver(ws: WebSocket, runtime_config: RuntimeConfig = Depe
         mcp_server_client, avatar_tools = await get_avatar_tools(runtime_config, ws)
         session.mcp_server_client = mcp_server_client
 
-        async with await create_gemini_live_session(tools=avatar_tools, runtime_config=runtime_config) as live_session:
+        async with await create_gemini_live_session(model_name=runtime_config.model_name, response_modality=runtime_config.response_modality, tools=avatar_tools) as live_session:
             session.live_session = live_session
+            session.live_session_tools = avatar_tools
             await handle_messages(ws, session, runtime_config)
     except asyncio.TimeoutError:
         await send_error_message(ws, {
@@ -366,15 +397,27 @@ async def handle_gemini_responses(ws: WebSocket, session: SessionState, runtime_
         tool_processor = asyncio.create_task(process_function_calls(tool_queue, ws, session))
         while True:
             try:
-                async for chunk in session.live_session.receive():
-
-                    if chunk.tool_call:
-                        await tool_queue.put(chunk.tool_call)
+                async for message in session.live_session.receive():
+                    if message.go_away is not None:
+                        # The connection will soon be terminated
+                        time_left = message.go_away.time_left
+                        await ws.send_json({
+                            "type": "go_away",
+                            "data": time_left
+                        })
+                    if message.session_resumption_update:
+                        update = message.session_resumption_update
+                        if update.resumable and update.new_handle:
+                            # The handle should be retained and linked to the session.
+                            logger.info(f"Session resumption update received: {update}")
+                            session.live_session.handle = update.new_handle
+                    if message.tool_call:
+                        await tool_queue.put(message.tool_call)
                         continue  # Continue processing other responses while tool executes
                     if runtime_config.response_modality == "text":
-                        await process_server_content_text_mode(ws, session, chunk.server_content)
+                        await process_server_content_text_mode(ws, session, message.server_content)
                     elif runtime_config.response_modality == "audio":
-                        await process_server_content_audio_mode(ws, session, chunk)
+                        await process_server_content_audio_mode(ws, session, message)
 
             except Exception as e:
                 logger.error(f"Error from Gemini stream: {e}")
@@ -522,7 +565,7 @@ async def process_server_content_text_mode(ws: WebSocket, session: SessionState,
 
     if server_content.output_transcription:
         transcription = server_content.output_transcription.text
-        logger.info(f"Transcription received: {transcription}")
+        #logger.info(f"Transcription received: {transcription}")
         await ws.send_json({
             "type": "text",
             "data": transcription
@@ -544,11 +587,11 @@ async def process_server_content_text_mode(ws: WebSocket, session: SessionState,
                     "data": part.text
                 })
 
-    if server_content.turn_complete:
+    if server_content.turn_complete or server_content.generation_complete:
         await ws.send_json({
             "type": "turn_complete"
         })
-        session.received_model_response = False;
+        session.received_model_response = False
         session.is_receiving_response = False
 
 
@@ -574,9 +617,8 @@ async def process_server_content_audio_mode(ws: WebSocket, session: SessionState
     if (server_content and server_content.model_turn) and data:
         session.audio_file.writeframes(data)
 
-    if server_content and server_content.output_transcription:
-        transcription = server_content.output_transcription.text
-        logger.info(f"Transcription received: {transcription}")
+    # if server_content and server_content.output_transcription:
+    #     transcription = server_content.output_transcription.text
 
     # Finalize and send when turn is complete
     if server_content and server_content.turn_complete:
@@ -617,7 +659,7 @@ async def process_server_content_audio_mode(ws: WebSocket, session: SessionState
                 "data": {"message": f"Failed to process audio: {str(e)}"}
             })
         finally:
-            # Cleanup
+            # Cleanup ...
             session.audio_stream.close()
             session.audio_stream = None
             session.audio_file = None
